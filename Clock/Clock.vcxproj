@@ -131,13 +131,11 @@
   <ItemGroup>
     <ClInclude Include="Clock.h" />
     <ClInclude Include="ImageUtils.h" />
-    <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="ImageUtils.cpp" />
     <ClCompile Include="MainWindow.cpp" />
-    <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Clock.rc" />
