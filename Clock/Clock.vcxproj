@@ -137,13 +137,6 @@
     <ClCompile Include="ImageUtils.cpp" />
     <ClCompile Include="MainWindow.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Clock.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="Clock.ico" />
-    <Image Include="small.ico" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
