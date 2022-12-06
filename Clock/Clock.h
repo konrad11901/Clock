@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BitmapDefinition.h"
 #include <windows.h>
 #include <d2d1_3.h>
 #include <wincodec.h>
@@ -29,6 +30,24 @@ private:
     winrt::com_ptr<ID2D1Bitmap1> d2d_target_bitmap;
 
     winrt::com_ptr<IWICImagingFactory2> imaging_factory;
+    BitmapDefinition clock_bitmap_def;
+    BitmapDefinition digits_bitmap_def;
+
+    D2D1_MATRIX_3X2_F transformation;
+    D2D1_POINT_2F center;
+
+    D2D1_RECT_F dots_src_rect = D2D1::RectF(
+        1080.0f,
+        0.0f,
+        1180.0f,
+        192.0f
+    );
+    D2D1_RECT_F dots_dest_rect;
+
+    bool show_dots = true;
+
+    int hour = 13;
+    int minute = 47;
 
     static constexpr D2D1_COLOR_F background_color = { .r = 0.62f, .g = 0.38f, .b = 0.62f, .a = 1.0f };
 

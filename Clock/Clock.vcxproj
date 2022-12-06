@@ -130,11 +130,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Clock.h" />
-    <ClInclude Include="ImageUtils.h" />
+    <ClInclude Include="BitmapDefinition.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Clock.cpp" />
-    <ClCompile Include="ImageUtils.cpp" />
+    <ClCompile Include="BitmapDefinition.cpp" />
     <ClCompile Include="MainWindow.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

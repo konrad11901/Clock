@@ -1,15 +1,11 @@
-#include "ImageUtils.h"
-#include <winrt/base.h>
+#include "BitmapDefinition.h"
 
-winrt::com_ptr<ID2D1Bitmap1> ImageUtils::LoadBitmapFromFile(
-    ID2D1RenderTarget* render_target,
-    IWICImagingFactory* imaging_factory,
-    PCWSTR uri) {
+BitmapDefinition::BitmapDefinition(PCWSTR uri) : uri(uri) {}
+
+void BitmapDefinition::CreateDeviceIndependentResources(IWICImagingFactory* imaging_factory) {
     winrt::com_ptr<IWICBitmapDecoder> decoder;
     winrt::com_ptr<IWICBitmapFrameDecode> source;
     winrt::com_ptr<IWICStream> stream;
-    winrt::com_ptr<IWICFormatConverter> converter;
-    winrt::com_ptr<IWICBitmapScaler> scaler;
 
     winrt::check_hresult(imaging_factory->CreateDecoderFromFilename(
         uri,
@@ -18,7 +14,7 @@ winrt::com_ptr<ID2D1Bitmap1> ImageUtils::LoadBitmapFromFile(
         WICDecodeMetadataCacheOnLoad,
         decoder.put()
     ));
-    
+
     winrt::check_hresult(decoder->GetFrame(0, source.put()));
 
     winrt::check_hresult(imaging_factory->CreateFormatConverter(converter.put()));
@@ -31,14 +27,15 @@ winrt::com_ptr<ID2D1Bitmap1> ImageUtils::LoadBitmapFromFile(
         0.f,
         WICBitmapPaletteTypeMedianCut
     ));
+}
 
-    winrt::com_ptr<ID2D1Bitmap1> bitmap;
+void BitmapDefinition::CreateDeviceDependentResources(ID2D1DeviceContext6* device_context) {
+    winrt::check_hresult(device_context->CreateBitmapFromWicBitmap(
+        converter.get(),
+        bitmap.put()
+    ));
+}
 
-    //winrt::check_hresult(render_target->CreateBitmapFromWicBitmap(
-    //    converter.get(),
-    //    nullptr,
-    //    bitmap.put()
-    //));
-
-    return bitmap;
+ID2D1Bitmap1* BitmapDefinition::GetBitmap() {
+    return bitmap.get();
 }

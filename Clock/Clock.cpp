@@ -1,7 +1,8 @@
 #include "Clock.h"
 #include <dxgi1_6.h>
 
-Clock::Clock() : hwnd(nullptr), d2d_factory(nullptr) {}
+Clock::Clock() : hwnd(nullptr), clock_bitmap_def(L"Assets\\Clock.png"), digits_bitmap_def(L"Assets\\Digits.png"),
+    transformation(), center(), dots_dest_rect() {}
 
 void Clock::Initialize(HINSTANCE instance, INT cmd_show) {
     CreateDeviceIndependentResources();
@@ -41,6 +42,8 @@ void Clock::Initialize(HINSTANCE instance, INT cmd_show) {
 }
 
 void Clock::RunMessageLoop() {
+    SetTimer(hwnd, 1, 200, nullptr);
+
     MSG msg;
 
     while (GetMessage(&msg, nullptr, 0, 0))
@@ -65,6 +68,9 @@ void Clock::CreateDeviceIndependentResources() {
         CLSCTX_INPROC_SERVER,
         IID_PPV_ARGS(imaging_factory.put())
     ));
+
+    clock_bitmap_def.CreateDeviceIndependentResources(imaging_factory.get());
+    digits_bitmap_def.CreateDeviceIndependentResources(imaging_factory.get());
 }
 
 
@@ -125,6 +131,9 @@ void Clock::CreateDeviceDependentResources() {
 
     winrt::check_hresult(d2d_factory->CreateDevice(dxgi_device.get(), d2d_device.put()));
     winrt::check_hresult(d2d_device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2d_context.put()));
+
+    clock_bitmap_def.CreateDeviceDependentResources(d2d_context.get());
+    digits_bitmap_def.CreateDeviceDependentResources(d2d_context.get());
 }
 
 void Clock::CreateWindowSizeDependentResources() {
@@ -197,6 +206,15 @@ void Clock::CreateWindowSizeDependentResources() {
     d2d_context->CreateBitmapFromDxgiSurface(dxgi_back_buffer.get(), &bitmapProperties, d2d_target_bitmap.put());
 
     d2d_context->SetTarget(d2d_target_bitmap.get());
+
+    center = D2D1::Point2F(d2d_context->GetSize().width / 2.0f, d2d_context->GetSize().height / 2.0f);
+    dots_dest_rect = D2D1::RectF(
+        center.x - 50.0f,
+        center.y - 96.0f,
+        center.x + 50.0f,
+        center.y + 96.0f
+    );
+    transformation = D2D1::Matrix3x2F::Rotation(-5.0f, center);
 }
 
 void Clock::HandleDeviceLost() {
@@ -208,8 +226,22 @@ void Clock::HandleDeviceLost() {
 
 void Clock::OnRender() {
     d2d_context->BeginDraw();
-
     d2d_context->Clear(background_color);
+
+    d2d_context->SetTransform(transformation);
+
+    auto bitmap_size = clock_bitmap_def.GetBitmap()->GetSize();
+    auto clock_rect = D2D1::RectF(
+        center.x - bitmap_size.width / 2.0f,
+        center.y - bitmap_size.height / 2.0f,
+        center.x + bitmap_size.width / 2.0f,
+        center.y + bitmap_size.height / 2.0f
+    );
+    d2d_context->DrawBitmap(clock_bitmap_def.GetBitmap(), clock_rect);
+
+    if (show_dots) {
+        d2d_context->DrawBitmap(digits_bitmap_def.GetBitmap(), dots_dest_rect, 0.5f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, dots_src_rect);
+    }
 
     winrt::check_hresult(d2d_context->EndDraw());
 
@@ -219,7 +251,14 @@ void Clock::OnRender() {
     parameters.pScrollRect = nullptr;
     parameters.pScrollOffset = nullptr;
 
-    winrt::check_hresult(swap_chain->Present1(1, 0, &parameters));
+    auto hr = swap_chain->Present1(1, 0, &parameters);
+    if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
+        // If the device was removed for any reason, a new device and swap chain will need to be created.
+        HandleDeviceLost();
+    }
+    else {
+        winrt::check_hresult(hr);
+    }
 }
 
 void Clock::OnResize(UINT width, UINT height) {
@@ -264,6 +303,15 @@ LRESULT Clock::WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             case WM_DISPLAYCHANGE:
             {
+                InvalidateRect(hwnd, nullptr, FALSE);
+            }
+            result = 0;
+            wasHandled = true;
+            break;
+
+            case WM_TIMER:
+            {
+                clock->show_dots = !clock->show_dots;
                 InvalidateRect(hwnd, nullptr, FALSE);
             }
             result = 0;
