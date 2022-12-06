@@ -11,7 +11,7 @@ class Clock {
 public:
     Clock();
 
-    void Initialize(HINSTANCE instance, INT cmd_show);
+    void InitializeWindow(HINSTANCE instance, INT cmd_show);
     void RunMessageLoop();
 
 private:
@@ -36,6 +36,7 @@ private:
     D2D1_MATRIX_3X2_F transformation;
     D2D1_POINT_2F center;
 
+    D2D1_RECT_F clock_dest_rect;
     D2D1_RECT_F dots_src_rect = D2D1::RectF(
         1080.0f,
         0.0f,
@@ -48,6 +49,7 @@ private:
 
     int hour = 13;
     int minute = 47;
+    int second = 18;
 
     static constexpr D2D1_COLOR_F background_color = { .r = 0.62f, .g = 0.38f, .b = 0.62f, .a = 1.0f };
 
@@ -59,6 +61,11 @@ private:
     void OnRender();
 
     void OnResize(UINT width, UINT height);
+
+    void RenderTime();
+    void RenderDigit(int digit, const D2D1_RECT_F& dest_rect);
+
+    void IncreaseTime();
 
     static LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 };

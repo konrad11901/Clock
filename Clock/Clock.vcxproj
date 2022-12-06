@@ -131,11 +131,13 @@
   <ItemGroup>
     <ClInclude Include="Clock.h" />
     <ClInclude Include="BitmapDefinition.h" />
+    <ClInclude Include="RandomGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="BitmapDefinition.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="RandomGenerator.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

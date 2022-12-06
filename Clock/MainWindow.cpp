@@ -6,7 +6,7 @@ INT WINAPI wWinMain(_In_ [[maybe_unused]] HINSTANCE instance,
     _In_ [[maybe_unused]] INT cmd_show) {
     Clock clock;
 
-    clock.Initialize(instance, cmd_show);
+    clock.InitializeWindow(instance, cmd_show);
     clock.RunMessageLoop();
 
     return 0;

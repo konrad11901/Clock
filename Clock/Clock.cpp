@@ -1,10 +1,16 @@
 #include "Clock.h"
+#include "RandomGenerator.h"
 #include <dxgi1_6.h>
 
 Clock::Clock() : hwnd(nullptr), clock_bitmap_def(L"Assets\\Clock.png"), digits_bitmap_def(L"Assets\\Digits.png"),
-    transformation(), center(), dots_dest_rect() {}
+    transformation(), center(), clock_dest_rect(), dots_dest_rect() {
+    RandomGenerator random_generator;
+    hour = random_generator.GetRandomNumber(0, 23);
+    minute = random_generator.GetRandomNumber(0, 59);
+    second = random_generator.GetRandomNumber(0, 59);
+}
 
-void Clock::Initialize(HINSTANCE instance, INT cmd_show) {
+void Clock::InitializeWindow(HINSTANCE instance, INT cmd_show) {
     CreateDeviceIndependentResources();
 
     WNDCLASSEX wcex = { sizeof(WNDCLASSEX) };
@@ -214,6 +220,13 @@ void Clock::CreateWindowSizeDependentResources() {
         center.x + 50.0f,
         center.y + 96.0f
     );
+    auto bitmap_size = clock_bitmap_def.GetBitmap()->GetSize();
+    clock_dest_rect = D2D1::RectF(
+        center.x - bitmap_size.width / 2.0f,
+        center.y - bitmap_size.height / 2.0f,
+        center.x + bitmap_size.width / 2.0f,
+        center.y + bitmap_size.height / 2.0f
+    );
     transformation = D2D1::Matrix3x2F::Rotation(-5.0f, center);
 }
 
@@ -230,18 +243,9 @@ void Clock::OnRender() {
 
     d2d_context->SetTransform(transformation);
 
-    auto bitmap_size = clock_bitmap_def.GetBitmap()->GetSize();
-    auto clock_rect = D2D1::RectF(
-        center.x - bitmap_size.width / 2.0f,
-        center.y - bitmap_size.height / 2.0f,
-        center.x + bitmap_size.width / 2.0f,
-        center.y + bitmap_size.height / 2.0f
-    );
-    d2d_context->DrawBitmap(clock_bitmap_def.GetBitmap(), clock_rect);
+    d2d_context->DrawBitmap(clock_bitmap_def.GetBitmap(), clock_dest_rect);
 
-    if (show_dots) {
-        d2d_context->DrawBitmap(digits_bitmap_def.GetBitmap(), dots_dest_rect, 0.5f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, dots_src_rect);
-    }
+    RenderTime();
 
     winrt::check_hresult(d2d_context->EndDraw());
 
@@ -312,6 +316,7 @@ LRESULT Clock::WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             case WM_TIMER:
             {
                 clock->show_dots = !clock->show_dots;
+                clock->IncreaseTime();
                 InvalidateRect(hwnd, nullptr, FALSE);
             }
             result = 0;
@@ -343,5 +348,50 @@ LRESULT Clock::WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
 
     return result;
+}
+
+void Clock::RenderTime() {
+    if (show_dots) {
+        d2d_context->DrawBitmap(digits_bitmap_def.GetBitmap(), dots_dest_rect, 0.75f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, dots_src_rect);
+    }
+
+    int digits[] = { hour / 10, hour % 10, minute / 10, minute % 10 };
+    auto dest_rect = D2D1::RectF(
+        center.x - 241.0f,
+        center.y - 96.0f,
+        center.x - 133.0f,
+        center.y + 96.0f
+    );
+
+    for (int i = 0; i < 4; i++) {
+        RenderDigit(digits[i], dest_rect);
+        dest_rect.left += 108.0f;
+        dest_rect.right += 108.0f;
+        if (i == 1) {
+            dest_rect.left += 50.0f;
+            dest_rect.right += 50.0f;
+        }
+    }
+}
+
+void Clock::RenderDigit(int digit, const D2D1_RECT_F& dest_rect) {
+    auto src_rect = D2D1::RectF(
+        digit * 108.0f,
+        0.0f,
+        (digit + 1) * 108.0f,
+        192.0f
+    );
+
+    d2d_context->DrawBitmap(digits_bitmap_def.GetBitmap(), dest_rect, 0.75f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, src_rect);
+}
+
+void Clock::IncreaseTime() {
+    second++;
+    minute += second / 60;
+    hour += minute / 60;
+
+    second %= 60;
+    minute %= 60;
+    hour &= 0;
 }
 
